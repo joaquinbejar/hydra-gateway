@@ -138,6 +138,26 @@ docker-clean:
 	docker compose -f Docker/docker-compose.yml down -v
 
 # =============================================================================
+# Packaging & Publishing
+# =============================================================================
+
+.PHONY: publish
+publish:
+	@echo "Publishing to crates.io (dry run)..."
+	cargo publish --dry-run
+	@echo "Dry run complete. Run 'cargo publish' to actually publish."
+
+.PHONY: publish-execute
+publish-execute:
+	@echo "Publishing to crates.io..."
+	cargo publish
+
+.PHONY: package
+package:
+	@echo "Listing package contents..."
+	cargo package --list
+
+# =============================================================================
 # Coverage
 # =============================================================================
 
@@ -281,4 +301,9 @@ help:
 	@echo "Release:"
 	@echo "  make version         Show current version"
 	@echo "  make tag             Create git tag from Cargo.toml version"
+	@echo ""
+	@echo "Packaging & Publishing:"
+	@echo "  make publish         Dry-run publish to crates.io"
+	@echo "  make publish-execute Publish to crates.io (for real)"
+	@echo "  make package         List package contents"
 	@echo ""

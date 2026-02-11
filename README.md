@@ -283,6 +283,11 @@ make docker-down             # Stop all services
 # Coverage
 make coverage                # Generate XML coverage report
 make coverage-html           # Generate HTML coverage report
+
+# Packaging & Publishing
+make package                 # List package contents
+make publish                 # Dry-run publish to crates.io
+make publish-execute         # Publish to crates.io (for real)
 ```
 
 ### Pre-Push Checklist
@@ -294,6 +299,33 @@ make pre-push
 ```
 
 This executes: `cargo fix` → `cargo fmt` → `cargo clippy` → `cargo test` → `cargo doc`
+
+---
+
+## Release
+
+Releases are triggered by pushing a semver git tag:
+
+```bash
+# 1. Update version in Cargo.toml
+# 2. Create and push a tag
+make tag
+git push origin --tags
+```
+
+The [release workflow](.github/workflows/release.yml) will automatically:
+
+1. **Validate** — format, clippy, tests, docs
+2. **Publish crate** to [crates.io](https://crates.io/crates/hydra-gateway)
+3. **Build & push Docker image** to GitHub Container Registry (`ghcr.io`)
+4. **Create GitHub Release** with auto-generated changelog
+
+Docker images are available at:
+
+```
+ghcr.io/joaquinbejar/hydra-gateway:<version>
+ghcr.io/joaquinbejar/hydra-gateway:latest
+```
 
 ---
 
