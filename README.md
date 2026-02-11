@@ -1,276 +1,246 @@
-# Hydra AMM
+# Hydra Gateway
 
-[![Crates.io](https://img.shields.io/crates/v/hydra-amm.svg)](https://crates.io/crates/hydra-amm)
-[![Documentation](https://docs.rs/hydra-amm/badge.svg)](https://docs.rs/hydra-amm)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/joaquinbejar/hydra-amm/actions/workflows/ci.yml/badge.svg)](https://github.com/joaquinbejar/hydra-amm/actions)
-[![codecov](https://codecov.io/gh/joaquinbejar/hydra-amm/branch/main/graph/badge.svg)](https://codecov.io/gh/joaquinbejar/hydra-amm)
+[![Build Status](https://github.com/joaquinbejar/hydra-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/joaquinbejar/hydra-gateway/actions)
+[![codecov](https://codecov.io/gh/joaquinbejar/hydra-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/joaquinbejar/hydra-gateway)
 
-**Universal AMM engine**: build, configure, and operate any Automated Market Maker through a unified interface.
+**REST API and WebSocket gateway** for the [hydra-amm](https://github.com/joaquinbejar/hydra-amm) universal AMM engine.
 
-Hydra AMM is a Rust library that provides a common set of traits, domain types, and feature-gated pool implementations covering the six major AMM families found across DeFi. Use it as a foundation to build your own AMM, simulate swap scenarios, or integrate multiple pool types into a single system.
+Hydra Gateway exposes every AMM pool type supported by `hydra-amm` through a JSON REST API and a real-time WebSocket feed. All AMM mathematics are delegated to `hydra-amm` — this service is a thin coordination and persistence layer.
 
 ---
 
-## Supported AMM Families
+## Supported Pool Types
 
-| Family | Invariant / Model | Real-World Examples | Feature Flag |
-|--------|-------------------|---------------------|--------------|
-| **Constant Product** | x · y = k | Uniswap v2, SushiSwap, Raydium CPMM, PancakeSwap | `constant-product` |
-| **Concentrated Liquidity (CLMM)** | Tick-based ranges | Uniswap v3/v4, Orca Whirlpools, Raydium CLMM, Trader Joe LB | `clmm` |
-| **Hybrid / StableSwap** | Curve amplified invariant | Curve Finance, Aerodrome/Velodrome, Thorchain | `hybrid` |
-| **Weighted Pools** | ∏(Bᵢ^Wᵢ) = k | Balancer 80/20, multi-token pools | `weighted` |
-| **Dynamic / Proactive MM** | Oracle-driven pricing | DODO PMM, Meteora DLMM, Lifinity, KyberSwap DMM | `dynamic` |
-| **Order Book Hybrid** | CLOB + AMM fallback | Phoenix | `order-book` |
+| Pool Type | Description | REST Endpoint |
+|-----------|-------------|---------------|
+| **Constant Product** | Uniswap V2 style (x · y = k) | `POST /api/v1/pools` |
+| **CLMM** | Concentrated Liquidity (Uniswap V3 style) | `POST /api/v1/pools` |
+| **Hybrid / StableSwap** | Curve-style with amplification | `POST /api/v1/pools` |
+| **Weighted** | Balancer-style multi-token pools | `POST /api/v1/pools` |
+| **Dynamic / PMM** | DODO-style oracle-driven pricing | `POST /api/v1/pools` |
+| **Order Book** | Phoenix-style CLOB + AMM hybrid | `POST /api/v1/pools` |
 
 ---
 
 ## Architecture
 
-The crate is organized into six layers, each building on the previous:
-
 ```
 ┌─────────────────────────────────────────────────┐
-│  Layer 5: Factory & Dispatch                    │
-│  DefaultPoolFactory · PoolBox enum dispatch     │
+│  Clients (HTTP, WebSocket)                      │
 ├─────────────────────────────────────────────────┤
-│  Layer 4: Pool Implementations (feature-gated)  │
-│  ConstantProduct · CLMM · Hybrid · Weighted     │
-│  Dynamic · OrderBook                            │
+│  Layer 5: REST Handlers (api/)                  │
+│  Axum routes · DTOs · OpenAPI (Swagger UI)      │
 ├─────────────────────────────────────────────────┤
-│  Layer 3: Configuration                         │
-│  AmmConfig enum · 6 config structs              │
+│  Layer 4: WebSocket Handler (ws/)               │
+│  Subscriptions · Real-time event streaming      │
 ├─────────────────────────────────────────────────┤
-│  Layer 2: Core Traits                           │
-│  SwapPool · LiquidityPool · FromConfig          │
+│  Layer 3: PoolService (service/)                │
+│  Orchestration · Event emission                 │
 ├─────────────────────────────────────────────────┤
-│  Layer 1: Domain Types                          │
-│  Token · Amount · Price · Tick · Position        │
+│  Layer 2: Domain (domain/)                      │
+│  PoolRegistry · EventBus · PoolId · PoolEntry   │
 ├─────────────────────────────────────────────────┤
-│  Layer 0: Math & Precision                      │
-│  Precision trait · CheckedArithmetic · Rounding │
+│  Layer 1: hydra-amm Engine                      │
+│  PoolBox enum dispatch · SwapPool · LiquidityPool│
+├─────────────────────────────────────────────────┤
+│  Layer 0: Persistence (persistence/)            │
+│  PostgreSQL · Events log · Pool snapshots       │
 └─────────────────────────────────────────────────┘
 ```
 
-**Key design principles:**
+**Key design decisions:**
 
-- **Configuration-driven**: Pools are created from declarative `AmmConfig` structs via a factory.
-- **Zero-cost abstractions**: Enum dispatch (`PoolBox`) instead of `dyn` trait objects — no vtable overhead.
-- **Checked arithmetic**: All operations are explicitly checked for overflow/underflow. No panics in library code.
-- **Newtypes everywhere**: `Amount`, `Price`, `Tick`, `FeeTier`, etc. — no raw primitives in public API.
-- **Feature-gated**: Each pool type is behind its own Cargo feature. Compile only what you need.
-
----
-
-## Installation
-
-Add `hydra-amm` to your project:
-
-```bash
-cargo add hydra-amm
-```
-
-Or add it manually to your `Cargo.toml`:
-
-```toml
-[dependencies]
-hydra-amm = "0.1"
-```
-
-This enables **all pool types** by default. To select only the pool types you need:
-
-```toml
-[dependencies]
-hydra-amm = { version = "0.1", default-features = false, features = ["std", "constant-product", "clmm"] }
-```
+- **Per-pool `RwLock`**: Fine-grained concurrency — no global mutex.
+- **Enum dispatch**: `PoolBox` from `hydra-amm` — zero vtable overhead.
+- **String-encoded amounts**: All `u128` values serialized as JSON strings to prevent precision loss.
+- **EventBus**: `tokio::broadcast` channel (configurable capacity) for real-time event streaming.
+- **OpenAPI documentation**: Full Swagger UI at `/swagger-ui`.
 
 ---
 
-## Feature Flags
+## API Endpoints
 
-| Feature | Default | Description |
-|---------|---------|-------------|
-| `std` | ✅ | Standard library support (BTreeMap storage, Display impls) |
-| `fixed-point` | ❌ | I80F48 fixed-point arithmetic via the [`fixed`](https://crates.io/crates/fixed) crate |
-| `float` | ❌ | f64 floating-point arithmetic (implies `std`) |
-| `constant-product` | ✅ | Constant product (x·y=k) pool |
-| `clmm` | ✅ | Concentrated Liquidity Market Maker pool |
-| `hybrid` | ✅ | Hybrid / StableSwap pool (Curve-style) |
-| `weighted` | ✅ | Weighted pool (Balancer-style) |
-| `dynamic` | ✅ | Dynamic / Proactive Market Maker pool (DODO-style) |
-| `order-book` | ✅ | Order Book Hybrid pool (uses [`orderbook-rs`](https://crates.io/crates/orderbook-rs)) |
-| `all-pools` | ✅ | Convenience: enables all six pool types |
+### System
 
-### Minimal Dependency Example
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/config/pool-types` | List supported pool types |
 
-For an on-chain environment that only needs constant-product swaps with fixed-point math:
+### Pools
 
-```toml
-[dependencies]
-hydra-amm = { version = "0.1", default-features = false, features = ["fixed-point", "constant-product"] }
-```
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/pools` | Create a new pool |
+| `GET` | `/api/v1/pools` | List pools (paginated) |
+| `GET` | `/api/v1/pools/{id}` | Get pool details |
+| `DELETE` | `/api/v1/pools/{id}` | Delete a pool |
+
+### Swaps
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/pools/{id}/swap` | Execute a swap |
+| `POST` | `/api/v1/pools/{id}/quote` | Get swap quote (read-only) |
+
+### Liquidity
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/pools/{id}/liquidity/add` | Add liquidity |
+| `POST` | `/api/v1/pools/{id}/liquidity/remove` | Remove liquidity |
+
+### WebSocket
+
+| Path | Description |
+|------|-------------|
+| `/ws` | Real-time event streaming (subscribe to pool events) |
+
+### Documentation
+
+| Path | Description |
+|------|-------------|
+| `/swagger-ui` | Interactive Swagger UI |
+| `/api-docs/openapi.json` | OpenAPI 3.0 specification |
 
 ---
 
 ## Quick Start
 
-### Creating a Constant Product Pool and Executing a Swap
+### Using Docker Compose
 
-```rust
-use hydra_amm::config::{AmmConfig, ConstantProductConfig};
-use hydra_amm::domain::{
-    Amount, BasisPoints, Decimals, FeeTier, SwapSpec,
-    Token, TokenAddress, TokenPair,
-};
-use hydra_amm::factory::DefaultPoolFactory;
-use hydra_amm::traits::SwapPool;
+The fastest way to get started:
 
-// 1. Define two tokens (32-byte addresses + decimal precision)
-let usdc = Token::new(
-    TokenAddress::from_bytes([1u8; 32]),
-    Decimals::new(6).expect("valid decimals"),
-);
-let weth = Token::new(
-    TokenAddress::from_bytes([2u8; 32]),
-    Decimals::new(18).expect("valid decimals"),
-);
-
-// 2. Build a Constant Product pool configuration
-let pair = TokenPair::new(usdc, weth).expect("distinct tokens");
-let fee  = FeeTier::new(BasisPoints::new(30)); // 0.30% fee
-let config = AmmConfig::ConstantProduct(
-    ConstantProductConfig::new(pair, fee, Amount::new(1_000_000), Amount::new(1_000_000))
-        .expect("valid config"),
-);
-
-// 3. Create the pool via the factory
-let mut pool = DefaultPoolFactory::create(&config).expect("pool created");
-
-// 4. Execute a swap (sell 10 000 units of token A for token B)
-let spec = SwapSpec::exact_in(Amount::new(10_000)).expect("non-zero amount");
-let result = pool.swap(spec, usdc).expect("swap succeeded");
-
-assert!(result.amount_out().get() > 0);
-assert!(result.fee().get() > 0);
+```bash
+cd Docker
+docker compose up -d
 ```
 
-### Advanced: CLMM Pool with Concentrated Liquidity Positions
+This starts PostgreSQL and the gateway. The API is available at `http://localhost:3000`.
 
-```rust
-use hydra_amm::config::{AmmConfig, ClmmConfig};
-use hydra_amm::domain::{
-    Amount, BasisPoints, Decimals, FeeTier, Liquidity, LiquidityChange,
-    Position, SwapSpec, Tick, Token, TokenAddress, TokenPair,
-};
-use hydra_amm::factory::DefaultPoolFactory;
-use hydra_amm::traits::{LiquidityPool, SwapPool};
+### From Source
 
-// 1. Define tokens
-let tok_a = Token::new(TokenAddress::from_bytes([1u8; 32]), Decimals::new(6).expect("ok"));
-let tok_b = Token::new(TokenAddress::from_bytes([2u8; 32]), Decimals::new(18).expect("ok"));
-let pair  = TokenPair::new(tok_a, tok_b).expect("distinct");
+```bash
+# 1. Clone the repository
+git clone https://github.com/joaquinbejar/hydra-gateway.git
+cd hydra-gateway
 
-// 2. Configure a CLMM pool at tick 0, tick spacing 10
-let fee = FeeTier::new(BasisPoints::new(30));
-let initial_position = Position::new(
-    Tick::new(-100).expect("valid tick"),
-    Tick::new(100).expect("valid tick"),
-    Liquidity::new(1_000_000),
-).expect("valid position");
+# 2. Start PostgreSQL (requires Docker)
+cd Docker && docker compose up -d postgres && cd ..
 
-let config = AmmConfig::Clmm(
-    ClmmConfig::new(
-        pair,
-        fee,
-        10,                                  // tick spacing
-        Tick::new(0).expect("valid tick"),    // current tick
-        vec![initial_position],              // initial positions
-    ).expect("valid config"),
-);
+# 3. Copy environment file
+cp .env.example .env
 
-// 3. Create pool and add more liquidity
-let mut pool = DefaultPoolFactory::create(&config).expect("pool created");
-let add = LiquidityChange::add(Amount::new(500_000), Amount::new(500_000))
-    .expect("valid change");
-let _ = pool.add_liquidity(&add);
-
-// 4. Execute a swap
-let spec = SwapSpec::exact_in(Amount::new(1_000)).expect("non-zero");
-let result = pool.swap(spec, tok_a).expect("swap ok");
-assert!(result.amount_out().get() > 0);
+# 4. Run the gateway
+cargo run
 ```
 
-### Implementing a Custom Pool
+### Create a Pool
 
-Implement the `SwapPool` trait for your own AMM type:
-
-```rust,ignore
-use hydra_amm::traits::SwapPool;
-use hydra_amm::domain::{FeeTier, Price, SwapResult, SwapSpec, Token, TokenPair};
-use hydra_amm::error::AmmError;
-
-struct MyCustomPool {
-    pair: TokenPair,
-    fee: FeeTier,
-    // your state here
-}
-
-impl SwapPool for MyCustomPool {
-    fn swap(&mut self, spec: SwapSpec, token_in: Token) -> Result<SwapResult, AmmError> {
-        // your swap logic — apply fee, compute output, update reserves
-        todo!()
+```bash
+curl -X POST http://localhost:3000/api/v1/pools \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pool_type": "constant_product",
+    "name": "USDC/WETH",
+    "config": {
+      "token_a": { "address": "usdc", "decimals": 6 },
+      "token_b": { "address": "weth", "decimals": 18 },
+      "fee_bps": 30,
+      "reserve_a": "1000000",
+      "reserve_b": "1000000"
     }
-
-    fn spot_price(&self, base: &Token, quote: &Token) -> Result<Price, AmmError> {
-        // return the current exchange rate (quote per base)
-        todo!()
-    }
-
-    fn token_pair(&self) -> &TokenPair {
-        &self.pair
-    }
-
-    fn fee_tier(&self) -> FeeTier {
-        self.fee
-    }
-}
+  }'
 ```
+
+### Execute a Swap
+
+```bash
+curl -X POST http://localhost:3000/api/v1/pools/{pool_id}/swap \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token_in": "usdc",
+    "token_out": "weth",
+    "amount_in": "10000"
+  }'
+```
+
+---
+
+## Configuration
+
+All settings are loaded from environment variables (or `.env` file). See [`.env.example`](.env.example) for the full list.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LISTEN_ADDR` | `0.0.0.0:3000` | Server bind address |
+| `DATABASE_URL` | `postgres://hydra:hydra@localhost:5432/hydra_gateway` | PostgreSQL connection string |
+| `DATABASE_MAX_CONNECTIONS` | `10` | Max DB pool connections |
+| `DATABASE_MIN_CONNECTIONS` | `2` | Min idle DB connections |
+| `DATABASE_CONNECT_TIMEOUT_SECS` | `5` | DB connection timeout (seconds) |
+| `PERSISTENCE_ENABLED` | `true` | Enable/disable persistence layer |
+| `PERSISTENCE_SNAPSHOT_INTERVAL_SECS` | `60` | Pool snapshot interval (seconds) |
+| `PERSISTENCE_EVENT_LOG_ENABLED` | `true` | Enable event logging |
+| `PERSISTENCE_CLEANUP_AFTER_DAYS` | `30` | Auto-delete snapshots older than N days |
+| `EVENT_BUS_CAPACITY` | `10000` | EventBus broadcast channel capacity |
+| `RUST_LOG` | `info` | Log level (tracing format) |
 
 ---
 
 ## Module Structure
 
 ```
-hydra_amm/
-├── error       — AmmError enum (code ranges 1000-4999)
-├── domain      — Token, Amount, Price, Tick, Position, SwapSpec, SwapResult, ...
-├── math        — Precision trait, CheckedArithmetic, Rounding, tick math
-├── traits      — SwapPool, LiquidityPool, FromConfig
-├── config      — AmmConfig enum + per-pool config structs
-├── pools       — Feature-gated pool implementations + PoolBox dispatch enum
-├── factory     — DefaultPoolFactory::create()
-└── prelude     — Convenience re-exports for common types and traits
+hydra_gateway/
+├── api/
+│   ├── dto/           — Request/response DTOs (all amounts as strings)
+│   ├── handlers/      — REST endpoint handlers (system, pool, swap, liquidity)
+│   └── mod.rs         — Router composition + OpenAPI (ApiDoc)
+├── app_state.rs       — Shared application state (PoolService + EventBus)
+├── config.rs          — Environment-based configuration
+├── domain/
+│   ├── pool_id.rs     — Type-safe UUID v4 pool identifier
+│   ├── pool_entry.rs  — Pool metadata wrapper around PoolBox
+│   ├── pool_event.rs  — Domain event enum
+│   ├── event_bus.rs   — tokio::broadcast event bus
+│   └── pool_registry.rs — HashMap<PoolId, RwLock<PoolEntry>>
+├── error.rs           — GatewayError → HTTP status code mapping
+├── persistence/       — PostgreSQL persistence (events + snapshots)
+├── service/
+│   └── pool_service.rs — Orchestration layer
+└── ws/                — WebSocket handler + subscription manager
 ```
+
+---
+
+## Docker
+
+### Build the Image
+
+```bash
+docker build -f Docker/Dockerfile -t hydra-gateway .
+```
+
+### Run with Docker Compose
+
+```bash
+cd Docker
+docker compose up -d
+```
+
+Services:
+- **postgres**: PostgreSQL 17 on port `5432`
+- **hydra-gateway**: API on port `3000`
 
 ---
 
 ## Safety and Correctness
 
-This crate prioritizes correctness above all:
-
 - **`unsafe` code is denied** — enforced at the compiler level
-- **No `.unwrap()` / `.expect()` / `panic!`** — denied via Clippy lints in library code
-- **Checked arithmetic** — all operations return `Option` or `Result`
-- **Explicit rounding** — all divisions specify rounding direction (up or down, always against the user)
+- **No `.unwrap()` / `.expect()` / `panic!`** — denied via Clippy lints
+- **Per-pool `RwLock`** — no global mutex, no deadlocks
 - **Overflow checks** enabled in both debug and release profiles
-- **Property-based testing** with `proptest` for invariant validation
-- **30 doc-tests** — all code examples in documentation are compiled and executed
-
----
-
-## API Reference
-
-Full API documentation is available on [docs.rs/hydra-amm](https://docs.rs/hydra-amm).
+- **Strict Clippy** with `-D warnings`
 
 ---
 
@@ -278,7 +248,8 @@ Full API documentation is available on [docs.rs/hydra-amm](https://docs.rs/hydra
 
 ### Prerequisites
 
-- Rust (edition 2024, see `rust-toolchain.toml`)
+- Rust 1.93+ (edition 2024, see `rust-toolchain.toml`)
+- Docker and Docker Compose (for PostgreSQL)
 - Make
 
 ### Common Commands
@@ -289,7 +260,7 @@ make build                   # Debug build
 make release                 # Release build
 
 # Test
-make test                    # Run all tests with all features
+make test                    # Run all tests
 make test-lib                # Library tests only
 make test-doc                # Documentation tests
 
@@ -304,12 +275,14 @@ make pre-push                # Full pre-push validation
 make doc                     # Generate docs
 make doc-open                # Generate and open in browser
 
+# Docker
+make docker-build            # Build Docker image
+make docker-up               # Start all services
+make docker-down             # Stop all services
+
 # Coverage
 make coverage                # Generate XML coverage report
 make coverage-html           # Generate HTML coverage report
-
-# Benchmarks
-make bench                   # Run criterion benchmarks
 ```
 
 ### Pre-Push Checklist
@@ -324,51 +297,12 @@ This executes: `cargo fix` → `cargo fmt` → `cargo clippy` → `cargo test` �
 
 ---
 
-## AMM Classification
-
-The following diagram shows the AMM landscape covered by this crate:
-
-```
-Automated Market Makers
-├── Constant Product (x·y=k)
-│   ├── Uniswap v2
-│   ├── SushiSwap
-│   ├── QuickSwap
-│   ├── Raydium (CPMM)
-│   └── PancakeSwap
-├── Concentrated Liquidity (CLMM)
-│   ├── Uniswap v3 / v4
-│   ├── Orca (Whirlpools)
-│   ├── Raydium (CLMM)
-│   ├── Trader Joe (Liquidity Book)
-│   ├── Maverick
-│   ├── Ambient Finance
-│   ├── Cetus Protocol
-│   ├── Camelot
-│   └── iZUMi (DL-AMM)
-├── Hybrid / StableSwap
-│   ├── Curve Finance
-│   ├── Aerodrome / Velodrome
-│   └── Thorchain (Orbital Pools)
-├── Weighted Pools
-│   └── Balancer (80/20, multi-token)
-├── Dynamic / Proactive MM
-│   ├── DODO (PMM)
-│   ├── Meteora (DLMM)
-│   ├── Lifinity
-│   └── KyberSwap (DMM)
-└── Order Book Hybrid
-    └── Phoenix (CLOB on Solana)
-```
-
----
-
 ## Contributing
 
 Contributions are welcome! Please follow these guidelines:
 
 1. **Fork** the repository and create a feature branch
-2. **Read** the documentation in `.internalDoc/` (especially `09-RUST-GUIDELINES.md`)
+2. **Read** the documentation in `.internalDoc/`
 3. **Write tests** for all new public functions
 4. **Run** `make pre-push` before submitting
 5. **Create** a PR with a clear description
@@ -378,7 +312,7 @@ Contributions are welcome! Please follow these guidelines:
 - All comments and documentation in **English**
 - `///` doc comments on every public item
 - `#[must_use]` on all pure functions
-- Checked arithmetic only — no panics in library code
+- No panics in production code
 - Newtypes for all domain concepts
 
 ---
@@ -391,9 +325,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## Contact
 
-- **Author**: Joaquín Béjar García
+- **Author**: Joaquin Bejar Garcia
 - **Email**: jb@taunais.com
 - **Telegram**: [@joaquin_bejar](https://t.me/joaquin_bejar)
-- **Repository**: [github.com/joaquinbejar/hydra-amm](https://github.com/joaquinbejar/hydra-amm)
-- **Crates.io**: [crates.io/crates/hydra-amm](https://crates.io/crates/hydra-amm)
-- **Documentation**: [docs.rs/hydra-amm](https://docs.rs/hydra-amm)
+- **Repository**: [github.com/joaquinbejar/hydra-gateway](https://github.com/joaquinbejar/hydra-gateway)

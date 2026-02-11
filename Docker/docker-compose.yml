@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.1-alpine3.23
     environment:
       POSTGRES_USER: hydra
       POSTGRES_PASSWORD: hydra
