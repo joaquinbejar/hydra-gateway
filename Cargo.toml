@@ -1,6 +1,6 @@
 [package]
 name = "hydra-gateway"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Joaquin Bejar <jb@taunais.com>"]
 description = "REST API and WebSocket gateway for the hydra-amm universal AMM engine"
