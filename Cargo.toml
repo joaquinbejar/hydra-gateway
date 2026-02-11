@@ -1,6 +1,6 @@
 [package]
 name = "hydra-gateway"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Joaquin Bejar <jb@taunais.com>"]
 description = "REST API and WebSocket gateway for the hydra-amm universal AMM engine"
@@ -9,6 +9,14 @@ readme = "README.md"
 repository = "https://github.com/joaquinbejar/hydra-gateway.git"
 keywords = ["amm", "defi", "gateway", "rest-api", "websocket"]
 categories = ["finance", "web-programming::http-server"]
+
+[features]
+default = ["swagger-ui"]
+swagger-ui = ["dep:utoipa-swagger-ui"]
+
+[package.metadata.docs.rs]
+no-default-features = true
+
 exclude = [
     ".dockerignore",
     ".github/",
@@ -56,7 +64,7 @@ anyhow = "1.0"
 
 # OpenAPI documentation
 utoipa = { version = "5", features = ["axum_extras", "chrono", "uuid"] }
-utoipa-swagger-ui = { version = "9", features = ["axum"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"], optional = true }
 
 # Configuration
 dotenvy = "0.15"
