@@ -7,27 +7,11 @@ RUN apk add --no-cache musl-dev pkgconfig openssl-dev openssl-libs-static curl
 
 WORKDIR /build
 
-# Cache dependencies: copy manifests first
-COPY Cargo.toml rust-toolchain.toml ./
-
-# Create dummy sources to pre-build dependencies only
-RUN mkdir src && \
-    echo 'fn main() {}' > src/main.rs && \
-    echo '//! stub' > src/lib.rs && \
-    cargo build --release 2>/dev/null || true && \
-    rm -rf src && \
-    rm -f target/release/deps/hydra_gateway* && \
-    rm -f target/release/deps/libhydra_gateway* && \
-    rm -f target/release/hydra-gateway && \
-    rm -f target/release/hydra_gateway*
-
 # Copy full source and build
-COPY src/ src/
-COPY migrations/ migrations/
+COPY . .
 
-RUN touch src/lib.rs src/main.rs && \
-    cargo build --release --locked 2>/dev/null || cargo build --release && \
-    strip target/release/hydra-gateway
+RUN cargo build --release
+RUN strip target/release/hydra-gateway
 
 # =============================================================================
 # Stage 2: Runtime
