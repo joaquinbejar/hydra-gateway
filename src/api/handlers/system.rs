@@ -6,11 +6,12 @@ use axum::routing::get;
 use axum::{Json, Router};
 use chrono::Utc;
 use serde::Serialize;
+use utoipa::ToSchema;
 
 use crate::app_state::AppState;
 
 /// Health check response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct HealthResponse {
     status: String,
     timestamp: String,
@@ -18,7 +19,17 @@ struct HealthResponse {
 }
 
 /// `GET /health` — Service health status.
-async fn health_handler() -> impl IntoResponse {
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "System",
+    summary = "Health check",
+    description = "Returns service health status, version, and current timestamp.",
+    responses(
+        (status = 200, description = "Service is healthy", body = HealthResponse),
+    )
+)]
+pub async fn health_handler() -> impl IntoResponse {
     (
         StatusCode::OK,
         Json(HealthResponse {
@@ -30,7 +41,7 @@ async fn health_handler() -> impl IntoResponse {
 }
 
 /// Supported pool type info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct PoolTypeInfo {
     pool_type: &'static str,
     description: &'static str,
@@ -39,7 +50,17 @@ struct PoolTypeInfo {
 }
 
 /// `GET /config/pool-types` — List supported pool types.
-async fn pool_types_handler() -> impl IntoResponse {
+#[utoipa::path(
+    get,
+    path = "/config/pool-types",
+    tag = "System",
+    summary = "List supported pool types",
+    description = "Returns metadata for every AMM pool type the gateway can create.",
+    responses(
+        (status = 200, description = "Pool type catalog", body = Vec<PoolTypeInfo>),
+    )
+)]
+pub async fn pool_types_handler() -> impl IntoResponse {
     let types = vec![
         PoolTypeInfo {
             pool_type: "constant_product",

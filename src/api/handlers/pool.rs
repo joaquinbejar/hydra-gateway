@@ -19,10 +19,26 @@ use crate::api::dto::{
     PoolSummaryDto,
 };
 use crate::app_state::AppState;
-use crate::error::GatewayError;
+use crate::error::{ErrorResponse, GatewayError};
 
 /// `POST /pools` — Create a new AMM pool.
-async fn create_pool(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on invalid config or unsupported pool type.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pools",
+    tag = "Pools",
+    summary = "Create a new AMM pool",
+    description = "Creates a pool of the specified type with the given configuration. The `pool_type` field selects the AMM variant and `config` holds type-specific parameters.",
+    request_body = CreatePoolRequest,
+    responses(
+        (status = 201, description = "Pool created successfully", body = CreatePoolResponse),
+        (status = 400, description = "Invalid request or pool type", body = ErrorResponse),
+    )
+)]
+pub async fn create_pool(
     State(state): State<AppState>,
     Json(req): Json<CreatePoolRequest>,
 ) -> Result<impl IntoResponse, GatewayError> {
@@ -45,7 +61,22 @@ async fn create_pool(
 }
 
 /// `GET /pools` — List all pools with pagination and optional type filter.
-async fn list_pools(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on internal failures.
+#[utoipa::path(
+    get,
+    path = "/api/v1/pools",
+    tag = "Pools",
+    summary = "List pools",
+    description = "Returns a paginated list of all pools, optionally filtered by type.",
+    params(PaginationParams),
+    responses(
+        (status = 200, description = "Paginated pool list", body = PoolListResponse),
+    )
+)]
+pub async fn list_pools(
     State(state): State<AppState>,
     Query(params): Query<PaginationParams>,
 ) -> Result<impl IntoResponse, GatewayError> {
@@ -87,7 +118,25 @@ async fn list_pools(
 }
 
 /// `GET /pools/:id` — Get pool details.
-async fn get_pool(
+///
+/// # Errors
+///
+/// Returns [`GatewayError::PoolNotFound`] if the pool does not exist.
+#[utoipa::path(
+    get,
+    path = "/api/v1/pools/{id}",
+    tag = "Pools",
+    summary = "Get pool details",
+    description = "Returns full details for a single pool including reserves, prices, and metadata.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    responses(
+        (status = 200, description = "Pool details", body = serde_json::Value),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+    )
+)]
+pub async fn get_pool(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, GatewayError> {
@@ -110,7 +159,25 @@ async fn get_pool(
 }
 
 /// `DELETE /pools/:id` — Remove a pool.
-async fn delete_pool(
+///
+/// # Errors
+///
+/// Returns [`GatewayError::PoolNotFound`] if the pool does not exist.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/pools/{id}",
+    tag = "Pools",
+    summary = "Delete a pool",
+    description = "Removes a pool and emits a PoolRemoved event.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    responses(
+        (status = 204, description = "Pool deleted"),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+    )
+)]
+pub async fn delete_pool(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, GatewayError> {

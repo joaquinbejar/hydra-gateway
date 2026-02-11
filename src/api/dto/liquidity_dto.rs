@@ -2,11 +2,12 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::domain::PoolId;
 
 /// Request body for `POST /pools/:id/liquidity/add`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddLiquidityRequest {
     /// Amount of token A to deposit (string-encoded u128).
     pub amount_a: String,
@@ -21,7 +22,7 @@ pub struct AddLiquidityRequest {
 }
 
 /// Response body for `POST /pools/:id/liquidity/add`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct AddLiquidityResponse {
     /// Pool identifier.
     pub pool_id: PoolId,
@@ -36,7 +37,7 @@ pub struct AddLiquidityResponse {
 }
 
 /// Request body for `POST /pools/:id/liquidity/remove`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RemoveLiquidityRequest {
     /// Amount of LP tokens to burn (string-encoded u128).
     pub liquidity_amount: String,
@@ -52,7 +53,7 @@ pub struct RemoveLiquidityRequest {
 }
 
 /// Response body for `POST /pools/:id/liquidity/remove`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct RemoveLiquidityResponse {
     /// Pool identifier.
     pub pool_id: PoolId,
@@ -65,7 +66,7 @@ pub struct RemoveLiquidityResponse {
 }
 
 /// Request body for `POST /pools/:id/fees/collect`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CollectFeesRequest {
     /// Position tick range for CLMM pools.
     #[serde(default)]
@@ -76,7 +77,7 @@ pub struct CollectFeesRequest {
 }
 
 /// Response body for `POST /pools/:id/fees/collect`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct CollectFeesResponse {
     /// Pool identifier.
     pub pool_id: PoolId,

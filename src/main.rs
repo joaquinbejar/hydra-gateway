@@ -9,8 +9,11 @@ use axum::routing::get;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use hydra_gateway::api;
+use hydra_gateway::api::ApiDoc;
 use hydra_gateway::app_state::AppState;
 use hydra_gateway::config::GatewayConfig;
 use hydra_gateway::domain::{EventBus, PoolRegistry};
@@ -47,6 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .merge(api::build_router())
         .route("/ws", get(ws_handler))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(app_state);

@@ -6,13 +6,14 @@
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// Unique identifier for an AMM pool.
 ///
 /// Wraps a UUID v4. Generated once at pool creation time and immutable
 /// thereafter. Used as the dictionary key in [`super::PoolRegistry`],
 /// event discriminator, and WebSocket subscription target.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
 pub struct PoolId(uuid::Uuid);
 

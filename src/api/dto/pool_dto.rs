@@ -4,12 +4,13 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use super::common_dto::{PaginationMeta, TokenDto};
 use crate::domain::PoolId;
 
 /// Request body for `POST /pools`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePoolRequest {
     /// Pool type discriminator.
     pub pool_type: String,
@@ -21,7 +22,7 @@ pub struct CreatePoolRequest {
 }
 
 /// Response body for `POST /pools` (201 Created).
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct CreatePoolResponse {
     /// Unique pool identifier.
     pub pool_id: PoolId,
@@ -36,7 +37,7 @@ pub struct CreatePoolResponse {
 }
 
 /// Single pool detail for `GET /pools/:id`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct PoolDetailResponse {
     /// Pool identifier.
     pub pool_id: PoolId,
@@ -63,7 +64,7 @@ pub struct PoolDetailResponse {
 }
 
 /// Pool summary for list responses.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct PoolSummaryDto {
     /// Pool identifier.
     pub pool_id: PoolId,
@@ -78,7 +79,7 @@ pub struct PoolSummaryDto {
 }
 
 /// Paginated list response for `GET /pools`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct PoolListResponse {
     /// Pool summaries.
     pub data: Vec<PoolSummaryDto>,

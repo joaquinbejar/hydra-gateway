@@ -2,11 +2,12 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::domain::PoolId;
 
 /// Request body for `POST /pools/:id/swap` and `POST /pools/:id/quote`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SwapRequest {
     /// Address of the input token.
     pub token_in: String,
@@ -30,7 +31,7 @@ pub struct SwapRequest {
 }
 
 /// Response body for `POST /pools/:id/swap`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct SwapResponse {
     /// Unique swap identifier.
     pub swap_id: String,
@@ -59,7 +60,7 @@ pub struct SwapResponse {
 }
 
 /// Response body for `POST /pools/:id/quote`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct QuoteResponse {
     /// Pool identifier.
     pub pool_id: PoolId,

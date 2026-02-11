@@ -12,10 +12,30 @@ use crate::api::dto::{
 };
 use crate::app_state::AppState;
 use crate::domain::PoolId;
-use crate::error::GatewayError;
+use crate::error::{ErrorResponse, GatewayError};
 
 /// `POST /pools/:id/liquidity/add` — Add liquidity to a pool.
-async fn add_liquidity(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on invalid amounts or missing pool.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pools/{id}/liquidity/add",
+    tag = "Liquidity",
+    summary = "Add liquidity",
+    description = "Deposits tokens into the pool and mints LP shares.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    request_body = AddLiquidityRequest,
+    responses(
+        (status = 200, description = "Liquidity added", body = AddLiquidityResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+    )
+)]
+pub async fn add_liquidity(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<AddLiquidityRequest>,
@@ -44,7 +64,28 @@ async fn add_liquidity(
 }
 
 /// `POST /pools/:id/liquidity/remove` — Remove liquidity from a pool.
-async fn remove_liquidity(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on invalid amounts, missing pool, or insufficient liquidity.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pools/{id}/liquidity/remove",
+    tag = "Liquidity",
+    summary = "Remove liquidity",
+    description = "Burns LP shares and returns the underlying tokens.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    request_body = RemoveLiquidityRequest,
+    responses(
+        (status = 200, description = "Liquidity removed", body = RemoveLiquidityResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+        (status = 422, description = "Insufficient liquidity", body = ErrorResponse),
+    )
+)]
+pub async fn remove_liquidity(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<RemoveLiquidityRequest>,

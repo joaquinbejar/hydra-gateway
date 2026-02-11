@@ -6,6 +6,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
+use utoipa::ToSchema;
 
 /// Structured JSON error response body.
 ///
@@ -19,14 +20,14 @@ use serde::Serialize;
 ///   }
 /// }
 /// ```
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     /// Structured error payload.
     pub error: ErrorBody,
 }
 
 /// Inner error body with numeric code and human-readable message.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorBody {
     /// Numeric error code (see code ranges in spec).
     pub code: u32,

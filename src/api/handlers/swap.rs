@@ -11,10 +11,31 @@ use hydra_amm::traits::SwapPool;
 use crate::api::dto::{QuoteResponse, SwapRequest, SwapResponse};
 use crate::app_state::AppState;
 use crate::domain::PoolId;
-use crate::error::GatewayError;
+use crate::error::{ErrorResponse, GatewayError};
 
 /// `POST /pools/:id/swap` — Execute a swap.
-async fn execute_swap(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on invalid parameters, missing pool, or insufficient liquidity.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pools/{id}/swap",
+    tag = "Swaps",
+    summary = "Execute a swap",
+    description = "Executes a token swap on the specified pool. Supports exact-in and exact-out modes.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    request_body = SwapRequest,
+    responses(
+        (status = 200, description = "Swap executed", body = SwapResponse),
+        (status = 400, description = "Invalid swap parameters", body = ErrorResponse),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+        (status = 422, description = "Insufficient liquidity", body = ErrorResponse),
+    )
+)]
+pub async fn execute_swap(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<SwapRequest>,
@@ -87,7 +108,27 @@ async fn execute_swap(
 }
 
 /// `POST /pools/:id/quote` — Get swap quote (read-only).
-async fn quote_swap(
+///
+/// # Errors
+///
+/// Returns [`GatewayError`] on invalid parameters or missing pool.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pools/{id}/quote",
+    tag = "Swaps",
+    summary = "Get swap quote",
+    description = "Returns a price quote for a swap without executing it. The pool state is not modified.",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Pool UUID"),
+    ),
+    request_body = SwapRequest,
+    responses(
+        (status = 200, description = "Quote computed", body = QuoteResponse),
+        (status = 400, description = "Invalid swap parameters", body = ErrorResponse),
+        (status = 404, description = "Pool not found", body = ErrorResponse),
+    )
+)]
+pub async fn quote_swap(
     State(state): State<AppState>,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<SwapRequest>,

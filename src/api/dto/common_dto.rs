@@ -1,9 +1,10 @@
 //! Shared DTO types used across multiple endpoints.
 
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 
 /// Token metadata as provided in pool creation requests.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct TokenDto {
     /// Hex-encoded token address.
     pub address: String,
@@ -15,7 +16,7 @@ pub struct TokenDto {
 }
 
 /// Pagination query parameters for list endpoints.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema, IntoParams)]
 pub struct PaginationParams {
     /// Page number (1-indexed). Defaults to 1.
     #[serde(default = "default_page")]
@@ -26,7 +27,7 @@ pub struct PaginationParams {
 }
 
 /// Pagination metadata included in list responses.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct PaginationMeta {
     /// Current page number.
     pub page: u32,
