@@ -1,7 +1,7 @@
 # Hydra Gateway
 
 [![Crates.io](https://img.shields.io/crates/v/hydra-gateway.svg)](https://crates.io/crates/hydra-gateway)
-[![Documentation](https://docs.rs/hydra-gateway/badge.svg)](https://docs.rs/hydra-gateway)
+[![Latest Release](https://img.shields.io/github/v/release/joaquinbejar/hydra-gateway)](https://github.com/joaquinbejar/hydra-gateway/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/joaquinbejar/hydra-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/joaquinbejar/hydra-gateway/actions)
 [![codecov](https://codecov.io/gh/joaquinbejar/hydra-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/joaquinbejar/hydra-gateway)
