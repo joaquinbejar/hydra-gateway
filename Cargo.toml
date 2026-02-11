@@ -14,6 +14,7 @@ exclude = [
     ".github/",
     ".internalDoc/",
     ".windsurf/",
+    ".idea/",
     "codecov.yml",
     "Makefile",
     "rust-toolchain.toml",
@@ -22,7 +23,7 @@ exclude = [
 
 [dependencies]
 # AMM engine
-hydra-amm = { git = "https://github.com/joaquinbejar/hydra-amm.git", features = ["std", "all-pools"] }
+hydra-amm = { version = "0.1", features = ["std", "all-pools"] }
 
 # HTTP framework + WebSocket
 axum = { version = "0.8", features = ["ws"] }
