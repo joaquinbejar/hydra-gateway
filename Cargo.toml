@@ -1,0 +1,91 @@
+[package]
+name = "hydra-gateway"
+version = "0.1.0"
+edition = "2024"
+authors = ["Joaquin Bejar <jb@taunais.com>"]
+description = "REST API and WebSocket gateway for the hydra-amm universal AMM engine"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/joaquinbejar/hydra-gateway.git"
+keywords = ["amm", "defi", "gateway", "rest-api", "websocket"]
+categories = ["finance", "web-programming::http-server"]
+exclude = [
+    ".dockerignore",
+    ".github/",
+    ".internalDoc/",
+    ".windsurf/",
+    "codecov.yml",
+    "Makefile",
+    "rust-toolchain.toml",
+    "docker-compose.yml",
+]
+
+[dependencies]
+# AMM engine
+hydra-amm = { git = "https://github.com/joaquinbejar/hydra-amm.git", features = ["std", "all-pools"] }
+
+# HTTP framework + WebSocket
+axum = { version = "0.8", features = ["ws"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "timeout"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Futures utilities (WebSocket split)
+futures-util = "0.3"
+
+# Identifiers
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Configuration
+dotenvy = "0.15"
+
+# Database (PostgreSQL)
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "migrate", "uuid", "chrono"] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+tokio-tungstenite = "0.26"
+tokio-test = "0.4"
+
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+needless_collect = "deny"
+unnecessary_to_owned = "deny"
+clone_on_ref_ptr = "deny"
+missing_errors_doc = "deny"
+missing_panics_doc = "deny"
+module_name_repetitions = "allow"
+similar_names = "allow"
+
+[profile.release]
+overflow-checks = true
+lto = "thin"
+codegen-units = 1
+
+[profile.dev]
+overflow-checks = true
