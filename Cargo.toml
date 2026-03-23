@@ -74,7 +74,7 @@ sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "migrate", "u
 
 [dev-dependencies]
 reqwest = { version = "0.13", features = ["json"] }
-tokio-tungstenite = "0.28"
+tokio-tungstenite = "0.29"
 tokio-test = "0.4"
 
 [lints.rust]
