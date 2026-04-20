@@ -1,7 +1,7 @@
 # =============================================================================
 # Stage 1: Build
 # =============================================================================
-FROM rust:1.94-alpine3.23 AS builder
+FROM rust:1.95-alpine3.23 AS builder
 
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev openssl-libs-static curl
 
