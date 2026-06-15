@@ -16,7 +16,7 @@ RUN strip target/release/hydra-gateway
 # =============================================================================
 # Stage 2: Runtime
 # =============================================================================
-FROM alpine:3.23
+FROM alpine:3.24
 
 RUN apk add --no-cache ca-certificates libgcc
 
