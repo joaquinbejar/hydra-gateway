@@ -70,7 +70,7 @@ utoipa-swagger-ui = { version = "9", features = ["axum"], optional = true }
 dotenvy = "0.15"
 
 # Database (PostgreSQL)
-sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "migrate", "uuid", "chrono"] }
+sqlx = { version = "0.9", features = ["postgres", "runtime-tokio", "migrate", "uuid", "chrono"] }
 
 [dev-dependencies]
 reqwest = { version = "0.13", features = ["json"] }
