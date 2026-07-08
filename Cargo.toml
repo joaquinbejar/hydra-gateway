@@ -36,7 +36,7 @@ hydra-amm = { version = "0.1", features = ["std", "all-pools"] }
 # HTTP framework + WebSocket
 axum = { version = "0.8", features = ["ws"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace", "timeout"] }
+tower-http = { version = "0.7", features = ["cors", "trace", "timeout"] }
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
