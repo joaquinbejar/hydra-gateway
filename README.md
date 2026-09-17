@@ -365,3 +365,16 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - **Email**: jb@taunais.com
 - **Telegram**: [@joaquin_bejar](https://t.me/joaquin_bejar)
 - **Repository**: [github.com/joaquinbejar/hydra-gateway](https://github.com/joaquinbejar/hydra-gateway)
+
+<!-- related-projects:start -->
+## Related projects
+
+Repositories by the same author that this project depends on, and repositories that depend on it.
+
+### Depends on
+
+| Repository | Description |
+|------------|-------------|
+| [hydra-amm](https://github.com/joaquinbejar/hydra-amm) · [crates.io](https://crates.io/crates/hydra-amm) | Universal AMM engine: build, configure and operate any Automated Market Maker through one interface. |
+
+<!-- related-projects:end -->
