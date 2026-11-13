@@ -377,7 +377,6 @@ Repositories by the same author that this project depends on, and repositories t
 
 | Repository | Description |
 |------------|-------------|
-| [fauxchange](https://github.com/joaquinbejar/fauxchange) | Exchange-in-a-box: local options exchange simulator with realistic matching, FIX/WS/REST APIs and historical replay. |
 | [hydra-amm](https://github.com/joaquinbejar/hydra-amm) | Universal AMM engine; hydra-gateway delegates all AMM pool mathematics to it. |
 
 <!-- related-projects:end -->
