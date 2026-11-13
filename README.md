@@ -359,12 +359,14 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-## Contact
+## Contribution and Contact
 
-- **Author**: Joaquin Bejar Garcia
+### **Contact Information**
+- **Author**: Joaquín Béjar García
 - **Email**: jb@taunais.com
 - **Telegram**: [@joaquin_bejar](https://t.me/joaquin_bejar)
-- **Repository**: [github.com/joaquinbejar/hydra-gateway](https://github.com/joaquinbejar/hydra-gateway)
+- **Repository**: <https://github.com/joaquinbejar/hydra-gateway>
+- **Documentation**: <https://docs.rs/hydra-gateway>
 
 <!-- related-projects:start -->
 ## Related projects
@@ -375,6 +377,7 @@ Repositories by the same author that this project depends on, and repositories t
 
 | Repository | Description |
 |------------|-------------|
-| [hydra-amm](https://github.com/joaquinbejar/hydra-amm) · [crates.io](https://crates.io/crates/hydra-amm) | Universal AMM engine: build, configure and operate any Automated Market Maker through one interface. |
+| [fauxchange](https://github.com/joaquinbejar/fauxchange) | Exchange-in-a-box: local options exchange simulator with realistic matching, FIX/WS/REST APIs and historical replay. |
+| [hydra-amm](https://github.com/joaquinbejar/hydra-amm) | Universal AMM engine; hydra-gateway delegates all AMM pool mathematics to it. |
 
 <!-- related-projects:end -->
